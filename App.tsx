@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { StyleSheet, Text, ScrollView, SafeAreaView, View } from 'react-native';
+import React, { useCallback, useState, useRef } from 'react';
+import { StyleSheet, Text, SafeAreaView } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import ListItem from './components/ListItem/ListItem';
 
 export interface Task {
@@ -14,6 +15,16 @@ const TITLES = [
   'Leave a ⭐️ on the repository',
   'Making it easy for users',
   'Making the UI better 😎',
+  'Here is a sample for swipe',
+  'A delete functionality',
+  'Leave a ⭐️ on the repository',
+  'Making it easy for users',
+  'Making the UI better 😎',
+  'Here is a sample for swipe',
+  'A delete functionality',
+  'Leave a ⭐️ on the repository',
+  'Making it easy for users',
+  'Making the UI better 😎',
 ];
 
 const TASKS: Task[] = TITLES.map((title, index) => ({ title, index }));
@@ -22,12 +33,23 @@ const BACKGROUND_COLOR = '#FAFBFF';
 
 export default function App() {
   const [tasks, setTasks] = useState(TASKS);
+  const scrollRef = useRef(null);
+
+  const onDismiss = useCallback((task: Task) => {
+    setTasks(tasks => tasks.filter(item => item.index !== task.index));
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.titleStyle}>Tasks</Text>
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} ref={scrollRef}>
         {tasks.map(task => (
-          <ListItem task={task} key={task.index} />
+          <ListItem
+            simultaneousHandlers={scrollRef}
+            task={task}
+            key={task.index}
+            onDismiss={onDismiss}
+          />
         ))}
       </ScrollView>
       <StatusBar style='auto' />

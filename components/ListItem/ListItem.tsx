@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { Text, View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
+  runOnJS,
   useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -9,19 +10,26 @@ import Animated, {
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
+  PanGestureHandlerProps,
 } from 'react-native-gesture-handler';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Task } from '../../App';
 
-interface ListItemProps {
+interface ListItemProps
+  extends Pick<PanGestureHandlerProps, 'simultaneousHandlers'> {
   task: Task;
+  onDismiss?: (task: Task) => void;
 }
 
 const LIST_ITEM_HEIGHT = 70;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TRANSLATE_X_THRESHOLD = -SCREEN_WIDTH * 0.3;
 
-const ListItem: FC<ListItemProps> = ({ task }) => {
+const ListItem: FC<ListItemProps> = ({
+  task,
+  onDismiss,
+  simultaneousHandlers,
+}) => {
   const translateX = useSharedValue(0);
   const itemHeight = useSharedValue(LIST_ITEM_HEIGHT);
   const marginVertical = useSharedValue(10);
@@ -36,7 +44,11 @@ const ListItem: FC<ListItemProps> = ({ task }) => {
         translateX.value = withTiming(-SCREEN_WIDTH);
         itemHeight.value = withTiming(0);
         marginVertical.value = withTiming(0);
-        opacity.value = withTiming(0);
+        opacity.value = withTiming(0, undefined, isFinished => {
+          if (isFinished && onDismiss) {
+            runOnJS(onDismiss)(task);
+          }
+        });
         return;
       }
       translateX.value = withTiming(0);
@@ -79,7 +91,9 @@ const ListItem: FC<ListItemProps> = ({ task }) => {
           color='red'
         />
       </Animated.View>
-      <PanGestureHandler onGestureEvent={panGesture}>
+      <PanGestureHandler
+        simultaneousHandlers={simultaneousHandlers}
+        onGestureEvent={panGesture}>
         <Animated.View style={[styles.task, rStyle]}>
           <Text>{task.title}</Text>
         </Animated.View>
